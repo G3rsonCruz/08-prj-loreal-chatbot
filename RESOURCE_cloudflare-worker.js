@@ -73,7 +73,7 @@ export default {
             sports, programming, schoolwork, or other non-beauty topics.
 
             For unrelated questions, politely respond:
-            "I'm here to help with L’Oréal products and beauty advice!
+            "I'm sorry I can't answer that question. I'm here to help with L’Oréal products and beauty advice!
             Would you like help with makeup, skincare, haircare,
             or fragrances?"
 
