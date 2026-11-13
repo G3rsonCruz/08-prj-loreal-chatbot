@@ -1,6 +1,6 @@
 // Set this to your deployed Cloudflare Worker URL.
 // Never put an API key in this file.
-const WORKER_URL = "";
+const WORKER_URL = "https://loreal-worker.cruzcarcg.workers.dev/";
 
 // Get the HTML elements used by the chatbot.
 const chatForm = document.getElementById("chatForm");
