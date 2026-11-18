@@ -104,6 +104,187 @@ h1 em {
   margin-top: 20px;
 }
 
+/* Product selection section */
+.product-section {
+  max-width: 820px;
+  margin: 12px auto 40px;
+}
+
+.section-heading {
+  margin-bottom: 16px;
+}
+
+.section-heading .eyebrow {
+  margin-bottom: 10px;
+}
+
+.section-heading h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: normal;
+  margin-bottom: 10px;
+}
+
+.section-heading > p:last-child {
+  color: #62605d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.demo-note {
+  color: #62605d;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+/* Two product columns on larger screens */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Each entire card is a button, including for keyboard users. */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 190px;
+  padding: 22px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  text-align: start;
+  overflow-wrap: anywhere;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.product-card:hover {
+  border-color: var(--red);
+}
+
+/* Highlight a selected product. */
+.product-card.selected {
+  border-color: var(--red);
+  background: #fff3f5;
+}
+
+.product-category {
+  color: #62605d;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.product-name {
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.product-brand {
+  color: #62605d;
+  font-size: 12px;
+}
+
+/* Text provides a selected indicator in addition to the red color. */
+.product-selection-label {
+  margin-top: auto;
+  padding-top: 8px;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* Selected products panel */
+.selected-products {
+  margin-top: 20px;
+  padding: 22px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.selected-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.selected-heading h3 {
+  font-size: 18px;
+}
+
+#selectedCount {
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: var(--paper);
+  color: #62605d;
+  font-size: 12px;
+}
+
+.empty-selection {
+  margin-top: 16px;
+  color: #62605d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.selected-products-list {
+  list-style: none;
+}
+
+.selected-product {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.selected-product:first-child {
+  margin-top: 16px;
+}
+
+.selected-product-info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.selected-product-name {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.selected-product-category {
+  margin-top: 4px;
+  color: #62605d;
+  font-size: 12px;
+}
+
+.remove-product {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  color: var(--red);
+  font-size: 12px;
+}
+
+.remove-product:hover {
+  border-color: var(--red);
+  background: #fff3f5;
+}
+
 /* Chat container */
 .chatbox {
   max-width: 820px;
@@ -346,6 +527,20 @@ h1 em {
 
   h1 {
     letter-spacing: -1px;
+  }
+
+  /* Stack product cards on smaller screens. */
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-card {
+    min-height: 170px;
+    padding: 18px;
+  }
+
+  .selected-products {
+    padding: 16px;
   }
 
   .ai-label {
