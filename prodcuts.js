@@ -6,28 +6,36 @@ const products = [
     name: "Sample Facial Cleanser",
     brand: "Demo product",
     category: "Skincare",
-    description: "Placeholder description for testing a skincare product."
+    description:
+      "This sample item represents a facial cleanser in the routine builder. " +
+      "It is demo data, not an actual L’Oréal product or recommendation."
   },
   {
     id: "demo-shampoo",
     name: "Sample Shampoo",
     brand: "Demo product",
     category: "Haircare",
-    description: "Placeholder description for testing a haircare product."
+    description:
+      "This sample item represents a shampoo in the routine builder. " +
+      "It is demo data, not an actual L’Oréal product or recommendation."
   },
   {
     id: "demo-mascara",
     name: "Sample Mascara",
     brand: "Demo product",
     category: "Makeup",
-    description: "Placeholder description for testing a makeup product."
+    description:
+      "This sample item represents a mascara in the routine builder. " +
+      "It is demo data, not an actual L’Oréal product or recommendation."
   },
   {
     id: "demo-fragrance",
     name: "Sample Fragrance",
     brand: "Demo product",
     category: "Fragrance",
-    description: "Placeholder description for testing a fragrance product."
+    description:
+      "This sample item represents a fragrance in the routine builder. " +
+      "It is demo data, not an actual L’Oréal product or recommendation."
   }
 ];
 
@@ -46,21 +54,22 @@ const selectionStatus = document.getElementById("selectionStatus");
 // We will add localStorage in a later step.
 let selectedProductIds = [];
 
-/* Create the product cards when the page loads. */
+/* Create the product cards and their description dropdowns. */
 function renderProducts() {
   productGrid.replaceChildren();
 
   products.forEach((product) => {
-    // A button makes the entire card clickable and keyboard accessible.
+    // Keep the selection button and description together in one grid item.
+    const productItem = document.createElement("article");
+
+    // The card button controls product selection.
     const card = document.createElement("button");
 
     card.type = "button";
     card.className = "product-card";
-
-    // Store the product ID on the card.
     card.dataset.productId = product.id;
 
-    // Tell screen readers whether the card is selected.
+    // Tell screen readers whether the product is selected.
     card.setAttribute("aria-pressed", "false");
 
     // Keep the accessible name stable when selection changes.
@@ -87,12 +96,47 @@ function renderProducts() {
 
     card.append(category, name, brand, selectionLabel);
 
-    // Select or unselect this product when its card is clicked.
+    // Clicking the card selects or unselects the product.
     card.addEventListener("click", () => {
       toggleProduct(product.id);
     });
 
-    productGrid.append(card);
+    // A native details element provides an accessible dropdown.
+    const details = document.createElement("details");
+
+    // Reuse the existing white-panel styling.
+    details.className = "selected-products";
+
+    // The summary opens and closes the description.
+    const summary = document.createElement("summary");
+    summary.textContent = "View description";
+
+    // Add the product name for screen readers.
+    const descriptionLabel = document.createElement("span");
+    descriptionLabel.className = "visually-hidden";
+    descriptionLabel.textContent = ` for ${product.name}`;
+
+    summary.append(descriptionLabel);
+
+    // Show the description as text rather than interpreting it as HTML.
+    const description = document.createElement("p");
+    description.className = "empty-selection";
+    description.textContent = product.description;
+
+    details.append(summary, description);
+
+    // Update the label when the description opens or closes.
+    details.addEventListener("toggle", () => {
+      summary.firstChild.textContent = details.open
+        ? "Hide description"
+        : "View description";
+    });
+
+    // Keep details outside the selection button.
+    // Opening a description therefore does not toggle selection.
+    productItem.append(card, details);
+
+    productGrid.append(productItem);
   });
 }
 
@@ -100,20 +144,20 @@ function renderProducts() {
 function toggleProduct(productId) {
   const product = products.find((item) => item.id === productId);
 
-  // Ignore an ID that does not belong to a product.
+  // Ignore IDs that do not belong to a product.
   if (!product) {
     return;
   }
 
   if (selectedProductIds.includes(productId)) {
-    // Keep every selected ID except the one being removed.
+    // Remove this product's ID from the selection.
     selectedProductIds = selectedProductIds.filter(
       (id) => id !== productId
     );
 
     selectionStatus.textContent = `${product.name} removed.`;
   } else {
-    // Add the ID once. Clicking again will remove it.
+    // Add the product's ID to the selection.
     selectedProductIds.push(productId);
 
     selectionStatus.textContent = `${product.name} selected.`;
@@ -123,7 +167,7 @@ function toggleProduct(productId) {
   renderSelectedProducts();
 }
 
-/* Update the appearance of each card without recreating it. */
+/* Update card selection without rebuilding the description dropdowns. */
 function updateProductCards() {
   const cards = productGrid.querySelectorAll(".product-card");
 
@@ -132,7 +176,7 @@ function updateProductCards() {
       card.dataset.productId
     );
 
-    // Apply or remove the selected CSS class.
+    // Apply or remove the red highlight.
     card.classList.toggle("selected", isSelected);
 
     // Update the selection state for screen readers.
@@ -182,7 +226,6 @@ function renderSelectedProducts() {
     removeButton.className = "remove-product";
     removeButton.textContent = "Remove";
 
-    // Include the product name for screen reader users.
     removeButton.setAttribute(
       "aria-label",
       `Remove ${product.name}`
@@ -191,12 +234,14 @@ function renderSelectedProducts() {
     removeButton.addEventListener("click", () => {
       toggleProduct(product.id);
 
-      // The remove button disappears after removal.
-      // Move focus to the matching card so keyboard users retain their place.
-      const matchingCard = Array.from(productGrid.children).find(
+      // Find the matching card inside its article wrapper.
+      const cards = productGrid.querySelectorAll(".product-card");
+
+      const matchingCard = Array.from(cards).find(
         (card) => card.dataset.productId === product.id
       );
 
+      // Preserve a useful focus position after the remove button disappears.
       if (matchingCard) {
         matchingCard.focus();
       }
