@@ -1,10 +1,10 @@
-// Products are loaded from the assignment's products.json file.
+// Load product information from products.json.
 let products = [];
 
-// Keep this project's saved selections separate from other websites.
+// Keep saved selections separate from other projects.
 const STORAGE_KEY = "loreal-selected-products";
 
-// Get the HTML elements for the product section.
+// Product section elements.
 const productGrid = document.getElementById("productGrid");
 const selectedProductsList = document.getElementById(
   "selectedProductsList"
@@ -14,17 +14,36 @@ const emptySelection = document.getElementById("emptySelection");
 const selectionStatus = document.getElementById("selectionStatus");
 const catalogNote = document.querySelector(".demo-note");
 
-// Restore saved product IDs when the page opens.
+// Search and category elements.
+const productSearch = document.getElementById("productSearch");
+const categoryFilter = document.getElementById("categoryFilter");
+const productResults = document.getElementById("productResults");
+const noProductResults = document.getElementById("noProductResults");
+
+// Restore saved IDs when the page opens.
 let selectedProductIds = loadSavedSelections();
 
-// Create the Clear all button below the selected-products list.
+// Create the Clear all button.
 const clearSelectionsBtn = document.createElement("button");
 
 clearSelectionsBtn.type = "button";
 clearSelectionsBtn.className = "remove-product";
 clearSelectionsBtn.textContent = "Clear all selections";
+clearSelectionsBtn.disabled = true;
 
 selectedProductsList.after(clearSelectionsBtn);
+
+// Create the Generate Routine button.
+// script.js uses this ID to disable it during AI requests.
+const generateRoutineBtn = document.createElement("button");
+
+generateRoutineBtn.type = "button";
+generateRoutineBtn.id = "generateRoutineButton";
+generateRoutineBtn.className = "remove-product";
+generateRoutineBtn.textContent = "Generate Routine";
+generateRoutineBtn.style.marginInlineStart = "12px";
+
+clearSelectionsBtn.after(generateRoutineBtn);
 
 /* Read saved selections from the browser. */
 function loadSavedSelections() {
@@ -37,7 +56,7 @@ function loadSavedSelections() {
       return [];
     }
 
-    // Convert valid IDs to strings and remove duplicates.
+    // Keep valid IDs, convert to strings, and remove duplicates.
     return [
       ...new Set(
         saved
@@ -50,12 +69,12 @@ function loadSavedSelections() {
       )
     ];
   } catch {
-    // Continue working even if storage is unavailable or invalid.
+    // Keep the page working if storage is unavailable or invalid.
     return [];
   }
 }
 
-/* Save the current selection in the browser. */
+/* Save the selected IDs in the browser. */
 function saveSelections() {
   try {
     localStorage.setItem(
@@ -68,10 +87,8 @@ function saveSelections() {
   }
 }
 
-/* Load the product catalog from products.json. */
+/* Load and validate the product catalog. */
 async function loadProducts() {
-  clearSelectionsBtn.disabled = true;
-
   if (catalogNote) {
     catalogNote.textContent = "Loading products…";
   }
@@ -87,7 +104,6 @@ async function loadProducts() {
 
     const data = await response.json();
 
-    // The assignment file contains an object with a products array.
     if (
       !Array.isArray(data.products) ||
       data.products.length === 0
@@ -97,7 +113,7 @@ async function loadProducts() {
       );
     }
 
-    // Check the fields needed to display each product.
+    // Check the fields used by the cards and routine generator.
     const invalidProduct = data.products.some((product) => {
       if (!product || typeof product !== "object") {
         return true;
@@ -128,7 +144,7 @@ async function loadProducts() {
       );
     }
 
-    // Use string IDs to match the values stored on the card buttons.
+    // String IDs match the data attributes on product cards.
     const loadedProducts = data.products.map((product) => ({
       ...product,
       id: String(product.id)
@@ -144,13 +160,14 @@ async function loadProducts() {
 
     products = loadedProducts;
 
-    // Restore only products that still exist in this catalog.
+    // Restore only selections that still exist in this catalog.
     selectedProductIds = selectedProductIds.filter((id) =>
       products.some((product) => product.id === id)
     );
 
     renderProducts();
     renderSelectedProducts();
+    setupProductFilters();
 
     if (catalogNote) {
       catalogNote.textContent =
@@ -170,14 +187,14 @@ async function loadProducts() {
   }
 }
 
-/* Create the product cards and expandable descriptions. */
+/* Create product cards and expandable descriptions. */
 function renderProducts() {
   productGrid.replaceChildren();
 
   products.forEach((product) => {
     const productItem = document.createElement("article");
 
-    // A button makes selection accessible by mouse and keyboard.
+    // A button supports selection with a mouse or keyboard.
     const card = document.createElement("button");
 
     card.type = "button";
@@ -198,7 +215,7 @@ function renderProducts() {
     ) {
       const image = document.createElement("img");
 
-      // The product name already labels the card.
+      // The card is already labeled with the product's name.
       image.alt = "";
       image.loading = "lazy";
       image.width = 140;
@@ -208,11 +225,12 @@ function renderProducts() {
       image.style.alignSelf = "center";
       image.style.maxWidth = "100%";
 
-      // Keep the product usable if its image cannot load.
       image.addEventListener(
         "error",
         () => {
+          // The product remains usable if its image fails.
           image.hidden = true;
+
           console.warn(
             `Image could not load for ${product.name}:`,
             product.image
@@ -247,8 +265,8 @@ function renderProducts() {
       toggleProduct(product.id);
     });
 
-    // Keep descriptions outside the button so opening them
-    // does not accidentally select or unselect the product.
+    // Descriptions are outside the selection button.
+    // Opening a description does not change the selection.
     const details = document.createElement("details");
     details.className = "selected-products";
 
@@ -266,7 +284,7 @@ function renderProducts() {
     const description = document.createElement("p");
     description.className = "empty-selection";
 
-    // Use textContent instead of interpreting catalog text as HTML.
+    // Display catalog content as text, not HTML.
     description.textContent = product.description;
 
     details.append(summary, description);
@@ -281,11 +299,10 @@ function renderProducts() {
     productGrid.append(productItem);
   });
 
-  // Highlight selections restored from localStorage.
   updateProductCards();
 }
 
-/* Select or unselect a product and save the updated selection. */
+/* Select or unselect a product. */
 function toggleProduct(productId) {
   const product = products.find(
     (item) => item.id === productId
@@ -312,7 +329,7 @@ function toggleProduct(productId) {
   saveSelections();
 }
 
-/* Update highlights and labels without rebuilding the cards. */
+/* Update highlights without rebuilding the cards. */
 function updateProductCards() {
   const cards = productGrid.querySelectorAll(".product-card");
 
@@ -322,11 +339,7 @@ function updateProductCards() {
     );
 
     card.classList.toggle("selected", isSelected);
-
-    card.setAttribute(
-      "aria-pressed",
-      String(isSelected)
-    );
+    card.setAttribute("aria-pressed", String(isSelected));
 
     const selectionLabel = card.querySelector(
       ".product-selection-label"
@@ -338,20 +351,23 @@ function updateProductCards() {
   });
 }
 
-/* Show the selected products and their Remove buttons. */
+/* Get full product information for the selected IDs. */
+function getSelectedProducts() {
+  return selectedProductIds
+    .map((id) => products.find((product) => product.id === id))
+    .filter(Boolean);
+}
+
+/* Display selected products and individual Remove buttons. */
 function renderSelectedProducts() {
   selectedProductsList.replaceChildren();
 
-  // Find the full product information for each selected ID.
-  const selectedProducts = selectedProductIds
-    .map((id) => products.find((product) => product.id === id))
-    .filter(Boolean);
+  const selectedProducts = getSelectedProducts();
 
   selectedCount.textContent =
     `${selectedProducts.length} selected`;
 
   emptySelection.hidden = selectedProducts.length > 0;
-
   clearSelectionsBtn.disabled = selectedProducts.length === 0;
 
   selectedProducts.forEach((product) => {
@@ -386,8 +402,6 @@ function renderSelectedProducts() {
     removeButton.addEventListener("click", () => {
       toggleProduct(product.id);
 
-      // Return keyboard focus to the corresponding product card
-      // after this Remove button disappears.
       const cards = productGrid.querySelectorAll(
         ".product-card"
       );
@@ -396,8 +410,14 @@ function renderSelectedProducts() {
         (card) => card.dataset.productId === product.id
       );
 
-      if (matchingCard) {
-        matchingCard.focus({preventScroll: true});
+      // Restore focus without scrolling to the product.
+      if (
+        matchingCard &&
+        !matchingCard.closest("article").hidden
+      ) {
+        matchingCard.focus({ preventScroll: true });
+      } else {
+        focusProductControls();
       }
     });
 
@@ -406,7 +426,142 @@ function renderSelectedProducts() {
   });
 }
 
-/* Clear the selection on screen and in saved storage. */
+/* Focus a visible control without moving the page. */
+function focusProductControls() {
+  if (productSearch && !productSearch.disabled) {
+    productSearch.focus({ preventScroll: true });
+    return;
+  }
+
+  const firstVisibleCard = productGrid.querySelector(
+    "article:not([hidden]) .product-card"
+  );
+
+  if (firstVisibleCard) {
+    firstVisibleCard.focus({ preventScroll: true });
+  }
+}
+
+/* Prepare the category dropdown and search listeners. */
+function setupProductFilters() {
+  // Keep the catalog usable if the HTML controls are missing.
+  if (
+    !productSearch ||
+    !categoryFilter ||
+    !productResults ||
+    !noProductResults
+  ) {
+    console.warn(
+      "Add the product search and category controls to index.html " +
+      "to enable filtering."
+    );
+
+    return;
+  }
+
+  // Build categories from the actual catalog.
+  const categories = [
+    ...new Set(
+      products.map((product) =>
+        product.category.trim().toLowerCase()
+      )
+    )
+  ].sort();
+
+  categoryFilter.replaceChildren();
+
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All categories";
+
+  categoryFilter.append(allOption);
+
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+
+    option.value = category;
+    option.textContent =
+      category.charAt(0).toUpperCase() + category.slice(1);
+
+    categoryFilter.append(option);
+  });
+
+  productSearch.disabled = false;
+  categoryFilter.disabled = false;
+
+  productSearch.addEventListener("input", filterProducts);
+  categoryFilter.addEventListener("change", filterProducts);
+
+  filterProducts();
+}
+
+/* Ignore capitalization, accents, and apostrophes in searches. */
+function normalizeProductText(text) {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "")
+    .toLowerCase();
+}
+
+/* Show products matching both the search and category. */
+function filterProducts() {
+  const searchText = normalizeProductText(
+    productSearch.value.trim()
+  );
+
+  const searchWords = searchText.split(/\s+/).filter(Boolean);
+  const selectedCategory = categoryFilter.value;
+
+  let visibleCount = 0;
+
+  const cards = productGrid.querySelectorAll(".product-card");
+
+  cards.forEach((card) => {
+    const product = products.find(
+      (item) => item.id === card.dataset.productId
+    );
+
+    if (!product) {
+      return;
+    }
+
+    const searchableText = normalizeProductText(
+      [
+        product.name,
+        product.brand,
+        product.category,
+        product.description
+      ].join(" ")
+    );
+
+    // Every search word must appear in the product information.
+    const matchesSearch = searchWords.every((word) =>
+      searchableText.includes(word)
+    );
+
+    const matchesCategory =
+      selectedCategory === "" ||
+      product.category.trim().toLowerCase() === selectedCategory;
+
+    const matches = matchesSearch && matchesCategory;
+
+    // Hide the entire card and its description.
+    // Hidden products remain selected.
+    card.closest("article").hidden = !matches;
+
+    if (matches) {
+      visibleCount++;
+    }
+  });
+
+  productResults.textContent =
+    `Showing ${visibleCount} of ${products.length} products.`;
+
+  noProductResults.hidden = visibleCount > 0;
+}
+
+/* Clear all selected products and save the empty selection. */
 clearSelectionsBtn.addEventListener("click", () => {
   selectedProductIds = [];
 
@@ -416,51 +571,37 @@ clearSelectionsBtn.addEventListener("click", () => {
   selectionStatus.textContent = "All selected products removed.";
 
   saveSelections();
-
-  // Move focus to a usable control after Clear all is disabled.
-  const firstCard = productGrid.querySelector(".product-card");
-
-  if (firstCard) {
-    firstCard.focus({preventScroll: true});
-  }
+  focusProductControls();
 });
 
-/* Create the Generate Routine button. */
-const generateRoutineBtn = document.createElement("button");
-
-generateRoutineBtn.type = "button";
-generateRoutineBtn.id = "generateRoutineButton";
-generateRoutineBtn.className = "remove-product";
-generateRoutineBtn.textContent = "Generate Routine";
-generateRoutineBtn.style.marginInlineStart = "12px";
-
-clearSelectionsBtn.after(generateRoutineBtn);
-
+/* Send selected product data to the chat script. */
 generateRoutineBtn.addEventListener("click", () => {
-  // Collect only the products currently selected.
-  const selectedProducts = selectedProductIds
-    .map((id) => products.find((product) => product.id === id))
-    .filter(Boolean)
-    .map((product) => ({
+  const selectedProducts = getSelectedProducts().map(
+    (product) => ({
       id: product.id,
       name: product.name,
       brand: product.brand,
       category: product.category,
       description: product.description
-    }));
+    })
+  );
 
   if (selectedProducts.length === 0) {
-    selectionStatus.textContent =
+    const message =
       "Select at least one product before generating a routine.";
 
-    // Display the message in the chat status area too.
-    document.getElementById("status").textContent =
-      "Select at least one product before generating a routine.";
+    selectionStatus.textContent = message;
+
+    const chatStatusElement = document.getElementById("status");
+
+    if (chatStatusElement) {
+      chatStatusElement.textContent = message;
+    }
 
     return;
   }
 
-  // Let script.js handle the AI request and conversation.
+  // script.js handles the request and conversation history.
   document.dispatchEvent(
     new CustomEvent("generate-routine", {
       detail: selectedProducts
@@ -468,5 +609,5 @@ generateRoutineBtn.addEventListener("click", () => {
   );
 });
 
-// Load the catalog and restore saved selections.
+// Load the catalog, restore selections, and activate filters.
 loadProducts();

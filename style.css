@@ -585,4 +585,54 @@ h1 em {
   .status {
     padding-left: 16px;
   }
+
+  /* Product search and category controls */
+.product-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-block: 20px 12px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.filter-field label {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.filter-field input,
+.filter-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.filter-field select:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 4px;
+}
+
+.product-results {
+  margin-block: 12px 18px;
+  color: #62605d;
+  font-size: 13px;
+}
+
+/* Hide the complete card, including its description. */
+.product-grid > article[hidden] {
+  display: none;
+}
 }

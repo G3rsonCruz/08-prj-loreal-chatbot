@@ -84,35 +84,75 @@
             not actual L’Oréal product listings.
           </p>
 
-          <!-- JavaScript creates the product cards here. -->
-          <div id="productGrid" class="product-grid"></div>
+          <!-- Search and category filters -->
+            <div class="product-filters">
+              <div class="filter-field">
+                <label for="productSearch">Search products</label>
 
-          <!-- Selected products appear below the grid. -->
-          <section
-            class="selected-products"
-            aria-labelledby="selectedTitle"
-          >
-            <div class="selected-heading">
-              <h3 id="selectedTitle">Selected Products</h3>
+                <input
+                  id="productSearch"
+                  type="search"
+                  placeholder="Search by name, brand, or keyword…"
+                  autocomplete="off"
+                  aria-controls="productGrid"
+                  disabled
+                />
+              </div>
 
-              <span id="selectedCount">0 selected</span>
+              <div class="filter-field">
+                <label for="categoryFilter">Category</label>
+
+                <select
+                  id="categoryFilter"
+                  aria-controls="productGrid"
+                  disabled
+                >
+                  <option value="">All categories</option>
+                </select>
+              </div>
             </div>
 
-            <p id="emptySelection" class="empty-selection">
-              No products selected yet. Choose a product above to get started.
+            <!-- Announce how many products match the filters. -->
+            <p
+              id="productResults"
+              class="product-results"
+              role="status"
+              aria-live="polite"
+            ></p>
+
+            <!-- JavaScript creates the product cards here. -->
+            <div id="productGrid" class="product-grid"></div>
+
+            <p id="noProductResults" class="empty-selection" hidden>
+              No products match your search. Try another keyword or category.
             </p>
 
-            <!-- JavaScript adds selected products to this list. -->
-            <ul id="selectedProductsList" class="selected-products-list"></ul>
+            <!-- Selected products appear below the grid. -->
+            <section
+              class="selected-products"
+              aria-labelledby="selectedTitle"
+            >
+              <div class="selected-heading">
+                <h3 id="selectedTitle">Selected Products</h3>
 
-            <!-- Announce selection changes to screen readers. -->
-            <p
-              id="selectionStatus"
-              class="visually-hidden"
-              role="status"
-            ></p>
-          </section>
-        </section>
+                <span id="selectedCount">0 selected</span>
+              </div>
+
+              <p id="emptySelection" class="empty-selection">
+                No products selected yet. Choose a product above to get started.
+              </p>
+
+              <!-- JavaScript adds selected products to this list. -->
+              <ul id="selectedProductsList" class="selected-products-list"></ul>
+
+                <!-- Announce selection changes to screen readers. -->
+                <p
+                  id="selectionStatus"
+                  class="visually-hidden"
+                  role="status"
+                ></p>
+              </section>
+            </section>
 
         <!-- Chat interface -->
         <section class="chatbox" aria-label="Beauty advisor chat">
