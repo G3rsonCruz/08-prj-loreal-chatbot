@@ -1,44 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>L’Oréal | Beauty Advisor</title>
 
-    <!-- Load the page styles. -->
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Load product selection and chat functionality. -->
+    <!-- Load product controls before the chat script. -->
     <script src="products.js" defer></script>
     <script src="script.js" defer></script>
 
-    <!-- Browser and Apple icons -->
     <link rel="icon" type="image/png" href="img/loreal-logo.png" />
     <link rel="apple-touch-icon" href="img/loreal-logo.png" />
 
-    <!-- Set the logo and page details for shared-link previews. -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="L’Oréal | Beauty Advisor" />
-
     <meta
       property="og:description"
       content="Explore L’Oréal products and personalized makeup, skincare, haircare, and fragrance routines."
     />
 
-    <!-- Replace YOUR-REPOSITORY-NAME with your actual repository name. -->
+    <!-- Use your actual repository name in this image URL. -->
     <meta
       property="og:image"
       content="https://g3rsoncruz.github.io/YOUR-REPOSITORY-NAME/img/loreal-logo.png"
     />
-
     <meta property="og:image:alt" content="L’Oréal logo" />
   </head>
 
   <body>
     <div class="page-wrapper">
-      <!-- Header and branding -->
+      <!-- Branding -->
       <header class="site-header">
         <img
           class="logo"
@@ -49,8 +43,17 @@
         <span class="edition">BEAUTY, PERSONALIZED.</span>
       </header>
 
+      <!-- Changes layout direction without translating the page. -->
+      <div class="direction-control">
+        <label for="layoutDirection">Layout direction</label>
+
+        <select id="layoutDirection">
+          <option value="ltr">Left to right (LTR)</option>
+          <option value="rtl">Right to left (RTL)</option>
+        </select>
+      </div>
+
       <main>
-        <!-- Page introduction -->
         <section class="intro" aria-labelledby="title">
           <p class="eyebrow">YOUR PERSONAL BEAUTY EDIT</p>
 
@@ -65,7 +68,7 @@
           </p>
         </section>
 
-        <!-- Product selection -->
+        <!-- Product catalog -->
         <section class="product-section" aria-labelledby="productsTitle">
           <div class="section-heading">
             <p class="eyebrow">BUILD YOUR BEAUTY ROUTINE</p>
@@ -78,97 +81,93 @@
             </p>
           </div>
 
-          <!-- Temporary products for testing the selection feature. -->
-          <p class="demo-note">
-            Demo catalog: these sample items are for testing and are
-            not actual L’Oréal product listings.
-          </p>
+          <!-- products.js updates this message after loading. -->
+          <p class="demo-note">Loading products…</p>
 
-          <!-- Search and category filters -->
-            <div class="product-filters">
-              <div class="filter-field">
-                <label for="productSearch">Search products</label>
+          <div class="product-filters">
+            <div class="filter-field">
+              <label for="productSearch">Search products</label>
 
-                <input
-                  id="productSearch"
-                  type="search"
-                  placeholder="Search by name, brand, or keyword…"
-                  autocomplete="off"
-                  aria-controls="productGrid"
-                  disabled
-                />
-              </div>
-
-              <div class="filter-field">
-                <label for="categoryFilter">Category</label>
-
-                <select
-                  id="categoryFilter"
-                  aria-controls="productGrid"
-                  disabled
-                >
-                  <option value="">All categories</option>
-                </select>
-              </div>
+              <input
+                id="productSearch"
+                type="search"
+                dir="auto"
+                placeholder="Search by name, brand, or keyword…"
+                autocomplete="off"
+                aria-controls="productGrid"
+                disabled
+              />
             </div>
 
-            <!-- Announce how many products match the filters. -->
-            <p
-              id="productResults"
-              class="product-results"
-              role="status"
-              aria-live="polite"
-            ></p>
+            <div class="filter-field">
+              <label for="categoryFilter">Category</label>
 
-            <!-- JavaScript creates the product cards here. -->
-            <div id="productGrid" class="product-grid"></div>
+              <select
+                id="categoryFilter"
+                aria-controls="productGrid"
+                disabled
+              >
+                <option value="">All categories</option>
+              </select>
+            </div>
+          </div>
 
-            <p id="noProductResults" class="empty-selection" hidden>
-              No products match your search. Try another keyword or category.
+          <p
+            id="productResults"
+            class="product-results"
+            role="status"
+            aria-live="polite"
+          ></p>
+
+          <div id="productGrid" class="product-grid"></div>
+
+          <p id="noProductResults" class="empty-selection" hidden>
+            No products match your search.
+            Try another keyword or category.
+          </p>
+
+          <!-- Selected products -->
+          <section
+            class="selected-products"
+            aria-labelledby="selectedTitle"
+          >
+            <div class="selected-heading">
+              <h3 id="selectedTitle">Selected Products</h3>
+              <span id="selectedCount">0 selected</span>
+            </div>
+
+            <p id="emptySelection" class="empty-selection">
+              No products selected yet.
+              Choose a product above to get started.
             </p>
 
-            <!-- Selected products appear below the grid. -->
-            <section
-              class="selected-products"
-              aria-labelledby="selectedTitle"
-            >
-              <div class="selected-heading">
-                <h3 id="selectedTitle">Selected Products</h3>
+            <ul
+              id="selectedProductsList"
+              class="selected-products-list"
+            ></ul>
 
-                <span id="selectedCount">0 selected</span>
-              </div>
+            <!-- products.js creates Clear all and Generate Routine. -->
 
-              <p id="emptySelection" class="empty-selection">
-                No products selected yet. Choose a product above to get started.
-              </p>
+            <p
+              id="selectionStatus"
+              class="visually-hidden"
+              role="status"
+            ></p>
+          </section>
+        </section>
 
-              <!-- JavaScript adds selected products to this list. -->
-              <ul id="selectedProductsList" class="selected-products-list"></ul>
-
-                <!-- Announce selection changes to screen readers. -->
-                <p
-                  id="selectionStatus"
-                  class="visually-hidden"
-                  role="status"
-                ></p>
-              </section>
-            </section>
-
-        <!-- Chat interface -->
+        <!-- Chat -->
         <section class="chatbox" aria-label="Beauty advisor chat">
           <div class="chat-heading">
             <div>
-              <span class="dot"></span>
-
+              <span class="dot" aria-hidden="true"></span>
               <strong>Beauty Advisor</strong>
-
               <span class="ai-label">AI ASSISTANT</span>
             </div>
 
             <button id="resetBtn" type="button">New chat ↗</button>
           </div>
 
-          <!-- Clicking a suggestion fills the input field. -->
           <div class="suggestions" aria-label="Conversation starters">
             <button
               type="button"
@@ -199,14 +198,11 @@
             </button>
           </div>
 
-          <!-- This panel updates whenever a new question is submitted. -->
           <aside class="latest" id="latestPanel" hidden>
             <span>LATEST QUESTION</span>
-
-            <p id="latestQuestion"></p>
+            <p id="latestQuestion" dir="auto"></p>
           </aside>
 
-          <!-- JavaScript adds user and assistant bubbles here. -->
           <div
             id="chatWindow"
             class="chat-window"
@@ -216,10 +212,8 @@
             aria-relevant="additions"
           ></div>
 
-          <!-- Displays loading messages and errors. -->
           <p id="status" class="status" role="status"></p>
 
-          <!-- Message input -->
           <form id="chatForm" class="chat-form">
             <label for="userInput" class="visually-hidden">
               Your beauty question
@@ -228,6 +222,7 @@
             <input
               id="userInput"
               name="userInput"
+              dir="auto"
               placeholder="Tell me what you’re looking for…"
               maxlength="2000"
               autocomplete="off"
@@ -246,7 +241,6 @@
         </section>
       </main>
 
-      <!-- Footer -->
       <footer class="site-footer">
         <p>
           L’Oréal-inspired student project · Not an official L’Oréal service.
@@ -254,7 +248,8 @@
 
         <p>
           Messages are sent to OpenAI through a secure server connection.
-          This page keeps history only until you reload or start a new chat.
+          Chat history resets when you reload or start a new chat.
+          Selected products are saved in this browser.
         </p>
       </footer>
     </div>

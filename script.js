@@ -1,4 +1,4 @@
-// Your deployed Cloudflare Worker handles the API key.
+// Your Cloudflare Worker stores the API key securely.
 const WORKER_URL = "https://loreal-worker.cruzcarcg.workers.dev/";
 
 // Chat interface elements.
@@ -11,16 +11,17 @@ const chatStatus = document.getElementById("status");
 const latestPanel = document.getElementById("latestPanel");
 const latestQuestion = document.getElementById("latestQuestion");
 const starters = document.querySelectorAll("[data-prompt]");
+const layoutDirection = document.getElementById("layoutDirection");
 
-// Save completed turns, including the generated routine.
+// Store completed conversation turns for this session.
 let messages = [];
 let busy = false;
 
-// Keep conversation history intact until its limit is reached.
+// Preserve history until the conversation reaches its limit.
 const MAX_TURNS = 25;
 const MAX_HISTORY_CHARS = 40000;
 
-/* Display a message safely as plain text. */
+/* Display a user or assistant message safely. */
 function addMessage(role, text) {
   const bubble = document.createElement("div");
 
@@ -33,6 +34,11 @@ function addMessage(role, text) {
     role === "user" ? "YOU" : "BEAUTY ADVISOR";
 
   const content = document.createElement("p");
+
+  // Let each message follow its own text direction.
+  content.dir = "auto";
+
+  // Display text without interpreting it as HTML.
   content.textContent = text;
 
   bubble.append(label, content);
@@ -43,7 +49,7 @@ function addMessage(role, text) {
   return bubble;
 }
 
-/* Start a new conversation without clearing selected products. */
+/* Reset conversation history without clearing product selections. */
 function newChat() {
   messages = [];
 
@@ -76,7 +82,6 @@ function setBusy(value) {
     button.disabled = value;
   });
 
-  // This button is created by products.js.
   const routineButton = document.getElementById(
     "generateRoutineButton"
   );
@@ -86,7 +91,7 @@ function setBusy(value) {
   }
 }
 
-/* Send either a regular question or a routine request. */
+/* Send either a chat question or a routine request. */
 async function sendMessage(
   apiText,
   displayText,
@@ -102,7 +107,6 @@ async function sendMessage(
     return;
   }
 
-  // Include every successfully completed conversation turn.
   const nextMessages = [
     ...messages,
     {
@@ -126,6 +130,10 @@ async function sendMessage(
 
     return;
   }
+
+  // Remember the previous panel in case the request fails.
+  const previousQuestion = latestQuestion.textContent;
+  const previousPanelHidden = latestPanel.hidden;
 
   latestQuestion.textContent = displayText;
   latestPanel.hidden = false;
@@ -156,7 +164,7 @@ async function sendMessage(
         "Content-Type": "application/json"
       },
 
-      // Preserve the messages array expected by your Worker.
+      // Include all completed turns and the latest request.
       body: JSON.stringify({
         messages: nextMessages
       }),
@@ -183,8 +191,7 @@ async function sendMessage(
       throw new Error("No reply was received. Please try again.");
     }
 
-    // The routine request includes the selected product JSON.
-    // Keeping it here lets the AI answer follow-up questions.
+    // Save the product JSON, routine, and subsequent questions.
     messages = [
       ...nextMessages,
       {
@@ -200,9 +207,11 @@ async function sendMessage(
         ? "Response limit reached. Ask me to continue for more detail."
         : "";
   } catch (error) {
-    // Remove the unsuccessful turn so it does not look like
-    // part of the completed conversation.
+    // Failed requests are not added to conversation history.
     userBubble.remove();
+
+    latestQuestion.textContent = previousQuestion;
+    latestPanel.hidden = previousPanelHidden;
 
     const explanation =
       error.name === "AbortError"
@@ -220,14 +229,13 @@ async function sendMessage(
     clearTimeout(timeout);
     setBusy(false);
 
-    // Keep the page from jumping when focus returns.
     if (!isRoutine) {
       userInput.focus({ preventScroll: true });
     }
   }
 }
 
-/* Handle regular chat questions. */
+/* Submit a regular chat question. */
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -240,7 +248,7 @@ chatForm.addEventListener("submit", (event) => {
   sendMessage(question, question);
 });
 
-/* Handle requests from the product selection section. */
+/* Receive selected products from products.js. */
 document.addEventListener("generate-routine", (event) => {
   if (busy) {
     return;
@@ -257,7 +265,7 @@ document.addEventListener("generate-routine", (event) => {
     return;
   }
 
-  // Show a readable request in the chat instead of raw JSON.
+  // Show readable product names in the conversation.
   const productNames = selectedProducts
     .map((product) => `${product.brand} — ${product.name}`)
     .join("\n");
@@ -266,7 +274,7 @@ document.addEventListener("generate-routine", (event) => {
     "Build a routine using these selected products:\n\n" +
     productNames;
 
-  // Send the complete selected product data to the AI.
+  // Send only the selected product data with the routine request.
   const apiText = `
 Create a concise beauty routine using only the selected products below.
 
@@ -297,7 +305,7 @@ ${JSON.stringify(selectedProducts, null, 2)}
   sendMessage(apiText, displayText, true);
 });
 
-/* Fill the input from a conversation starter. */
+/* Fill the message input from a conversation starter. */
 starters.forEach((button) => {
   button.addEventListener("click", () => {
     userInput.value = button.dataset.prompt;
@@ -305,10 +313,20 @@ starters.forEach((button) => {
   });
 });
 
-/* Reset chat history while leaving product selections saved. */
+/* Start a new chat while preserving saved product selections. */
 resetBtn.addEventListener("click", () => {
   newChat();
   userInput.focus({ preventScroll: true });
 });
 
+/* Switch the page layout between LTR and RTL.
+   This controls direction, not language or translation. */
+layoutDirection.addEventListener("change", () => {
+  document.documentElement.dir = layoutDirection.value;
+});
+
+// Match the page to the dropdown's initial selection.
+document.documentElement.dir = layoutDirection.value;
+
+// Show the welcome message.
 newChat();
