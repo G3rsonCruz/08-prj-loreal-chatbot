@@ -688,4 +688,94 @@ html[dir="rtl"] .msg.user p {
 .msg p + p {
   margin-top: 8px;
 }
+
+/* Product cards underneath chatbot answers */
+.chat-product-cards {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.chat-product-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  text-align: start;
+}
+
+.chat-product-image-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 100px;
+  width: 100px;
+  min-height: 100px;
+}
+
+.chat-product-image {
+  display: block;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.chat-product-image-fallback {
+  color: #62605d;
+  font-size: 11px;
+  text-align: center;
+}
+
+.chat-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chat-product-brand {
+  color: #62605d;
+  font-size: 11px;
+}
+
+.chat-product-name {
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.chat-product-link {
+  color: #9f122a;
+  font-size: 12px;
+  font-weight: bold;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.chat-product-link:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 3px;
+}
+
+.chat-product-link-note {
+  color: #62605d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 420px) {
+  .chat-product-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chat-product-image-area {
+    align-self: center;
+  }
+}
+
 }

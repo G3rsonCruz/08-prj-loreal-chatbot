@@ -73,6 +73,11 @@ Use plain text and short numbered steps when helpful.
 Avoid Markdown headings and bold formatting.
 Preserve inline web citations.
 Finish within 300 output tokens.
+
+When discussing a product, include its full product name in your answer.
+If selected-product JSON is provided, preserve its exact product names.
+Give user a product link, search for the official product page
+and cite it. Never invent a product URL.
 `;
 
 export default {
