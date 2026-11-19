@@ -1,45 +1,11 @@
-// Demo data for testing product selection.
-// Replace these items with your assignment's real product data later.
-const products = [
-  {
-    id: "demo-cleanser",
-    name: "Sample Facial Cleanser",
-    brand: "Demo product",
-    category: "Skincare",
-    description:
-      "This sample item represents a facial cleanser in the routine builder. " +
-      "It is demo data, not an actual L’Oréal product or recommendation."
-  },
-  {
-    id: "demo-shampoo",
-    name: "Sample Shampoo",
-    brand: "Demo product",
-    category: "Haircare",
-    description:
-      "This sample item represents a shampoo in the routine builder. " +
-      "It is demo data, not an actual L’Oréal product or recommendation."
-  },
-  {
-    id: "demo-mascara",
-    name: "Sample Mascara",
-    brand: "Demo product",
-    category: "Makeup",
-    description:
-      "This sample item represents a mascara in the routine builder. " +
-      "It is demo data, not an actual L’Oréal product or recommendation."
-  },
-  {
-    id: "demo-fragrance",
-    name: "Sample Fragrance",
-    brand: "Demo product",
-    category: "Fragrance",
-    description:
-      "This sample item represents a fragrance in the routine builder. " +
-      "It is demo data, not an actual L’Oréal product or recommendation."
-  }
-];
+// Load the actual products from products.json.
+let products = [];
 
-// Get the HTML elements for product selection.
+// Store selected product IDs.
+// Saving selections after a reload will be added later.
+let selectedProductIds = [];
+
+// Get the product section elements.
 const productGrid = document.getElementById("productGrid");
 
 const selectedProductsList = document.getElementById(
@@ -49,34 +15,145 @@ const selectedProductsList = document.getElementById(
 const selectedCount = document.getElementById("selectedCount");
 const emptySelection = document.getElementById("emptySelection");
 const selectionStatus = document.getElementById("selectionStatus");
+const catalogNote = document.querySelector(".demo-note");
 
-// Store the IDs of selected products.
-// We will add localStorage in a later step.
-let selectedProductIds = [];
+/* Load the product catalog from the JSON file. */
+async function loadProducts() {
+  if (catalogNote) {
+    catalogNote.textContent = "Loading products…";
+  }
 
-/* Create the product cards and their description dropdowns. */
+  try {
+    const response = await fetch("products.json");
+
+    // Handle missing files or other unsuccessful responses.
+    if (!response.ok) {
+      throw new Error(
+        "Could not load products.json. Make sure it is next to index.html."
+      );
+    }
+
+    const data = await response.json();
+
+    // The provided file contains an object with a products array.
+    if (
+      !Array.isArray(data.products) ||
+      data.products.length === 0
+    ) {
+      throw new Error(
+        "The JSON file must contain a nonempty products array."
+      );
+    }
+
+    // Check the fields needed to display each product.
+    const hasInvalidProduct = data.products.some((product) => {
+      return (
+        !product ||
+        !["string", "number"].includes(typeof product.id) ||
+        !String(product.id).trim() ||
+        ["name", "brand", "category", "description"].some(
+          (field) =>
+            typeof product[field] !== "string" ||
+            !product[field].trim()
+        )
+      );
+    });
+
+    if (hasInvalidProduct) {
+      throw new Error(
+        "A product is missing an ID, name, brand, category, or description."
+      );
+    }
+
+    // Convert IDs to strings so they match HTML data attributes.
+    products = data.products.map((product) => ({
+      ...product,
+      id: String(product.id)
+    }));
+
+    // Each product must have its own unique ID.
+    const uniqueIds = new Set(
+      products.map((product) => product.id)
+    );
+
+    if (uniqueIds.size !== products.length) {
+      throw new Error("The catalog contains duplicate product IDs.");
+    }
+
+    renderProducts();
+    renderSelectedProducts();
+
+    // Replace the old demo message with the actual product count.
+    if (catalogNote) {
+      catalogNote.textContent =
+        `${products.length} products loaded from your assignment catalog. ` +
+        "Select products to start building your routine.";
+    }
+  } catch (error) {
+    // Display a useful message instead of leaving an unexplained empty grid.
+    if (catalogNote) {
+      catalogNote.textContent =
+        `Unable to load the catalog: ${error.message}`;
+    }
+
+    selectionStatus.textContent = "The product catalog could not load.";
+
+    // Keep the original error available for troubleshooting.
+    console.error("Product catalog error:", error);
+  }
+}
+
+/* Create product cards and expandable descriptions. */
 function renderProducts() {
   productGrid.replaceChildren();
 
   products.forEach((product) => {
-    // Keep the selection button and description together in one grid item.
+    // Group the selection card and its description.
     const productItem = document.createElement("article");
 
-    // The card button controls product selection.
+    // Make the entire card a keyboard-accessible button.
     const card = document.createElement("button");
 
     card.type = "button";
     card.className = "product-card";
     card.dataset.productId = product.id;
 
-    // Tell screen readers whether the product is selected.
     card.setAttribute("aria-pressed", "false");
 
-    // Keep the accessible name stable when selection changes.
     card.setAttribute(
       "aria-label",
       `${product.name}, ${product.brand}, ${product.category}`
     );
+
+    // Add the product image when the catalog provides one.
+    if (typeof product.image === "string" && product.image.trim()) {
+      const image = document.createElement("img");
+
+      // The product name is already included in the button's label.
+      image.alt = "";
+
+      image.loading = "lazy";
+      image.width = 140;
+      image.height = 140;
+
+      // Keep the image proportional and centered.
+      image.style.objectFit = "contain";
+      image.style.alignSelf = "center";
+      image.style.maxWidth = "100%";
+
+      // Keep the card usable if an external image fails to load.
+      image.addEventListener(
+        "error",
+        () => {
+          image.hidden = true;
+        },
+        { once: true }
+      );
+
+      image.src = product.image;
+
+      card.append(image);
+    }
 
     const category = document.createElement("span");
     category.className = "product-category";
@@ -96,68 +173,66 @@ function renderProducts() {
 
     card.append(category, name, brand, selectionLabel);
 
-    // Clicking the card selects or unselects the product.
+    // Select or unselect this product when its card is clicked.
     card.addEventListener("click", () => {
       toggleProduct(product.id);
     });
 
-    // A native details element provides an accessible dropdown.
+    // Keep the description outside the selection button.
     const details = document.createElement("details");
-
-    // Reuse the existing white-panel styling.
     details.className = "selected-products";
 
-    // The summary opens and closes the description.
     const summary = document.createElement("summary");
-    summary.textContent = "View description";
 
-    // Add the product name for screen readers.
-    const descriptionLabel = document.createElement("span");
-    descriptionLabel.className = "visually-hidden";
-    descriptionLabel.textContent = ` for ${product.name}`;
+    const summaryText = document.createElement("span");
+    summaryText.textContent = "View description";
 
-    summary.append(descriptionLabel);
+    // Include the product name for screen reader users.
+    const accessibleName = document.createElement("span");
+    accessibleName.className = "visually-hidden";
+    accessibleName.textContent = ` for ${product.name}`;
 
-    // Show the description as text rather than interpreting it as HTML.
+    summary.append(summaryText, accessibleName);
+
     const description = document.createElement("p");
     description.className = "empty-selection";
+
+    // Display the catalog description safely as text.
     description.textContent = product.description;
 
     details.append(summary, description);
 
-    // Update the label when the description opens or closes.
+    // Change the label when the description opens or closes.
     details.addEventListener("toggle", () => {
-      summary.firstChild.textContent = details.open
+      summaryText.textContent = details.open
         ? "Hide description"
         : "View description";
     });
 
-    // Keep details outside the selection button.
-    // Opening a description therefore does not toggle selection.
     productItem.append(card, details);
-
     productGrid.append(productItem);
   });
+
+  updateProductCards();
 }
 
-/* Add or remove a product from the selection. */
+/* Select or unselect a product. */
 function toggleProduct(productId) {
   const product = products.find((item) => item.id === productId);
 
-  // Ignore IDs that do not belong to a product.
   if (!product) {
     return;
   }
 
   if (selectedProductIds.includes(productId)) {
-    // Remove this product's ID from the selection.
+    // Remove the selected ID.
     selectedProductIds = selectedProductIds.filter(
       (id) => id !== productId
     );
 
     selectionStatus.textContent = `${product.name} removed.`;
   } else {
-    // Add the product's ID to the selection.
+    // Add the ID once.
     selectedProductIds.push(productId);
 
     selectionStatus.textContent = `${product.name} selected.`;
@@ -167,7 +242,7 @@ function toggleProduct(productId) {
   renderSelectedProducts();
 }
 
-/* Update card selection without rebuilding the description dropdowns. */
+/* Update highlights without rebuilding the cards. */
 function updateProductCards() {
   const cards = productGrid.querySelectorAll(".product-card");
 
@@ -176,11 +251,12 @@ function updateProductCards() {
       card.dataset.productId
     );
 
-    // Apply or remove the red highlight.
     card.classList.toggle("selected", isSelected);
 
-    // Update the selection state for screen readers.
-    card.setAttribute("aria-pressed", String(isSelected));
+    card.setAttribute(
+      "aria-pressed",
+      String(isSelected)
+    );
 
     const selectionLabel = card.querySelector(
       ".product-selection-label"
@@ -192,18 +268,23 @@ function updateProductCards() {
   });
 }
 
-/* Display the selected products below the grid. */
+/* Update the selected-products list. */
 function renderSelectedProducts() {
   selectedProductsList.replaceChildren();
 
   selectedCount.textContent =
     `${selectedProductIds.length} selected`;
 
-  // Show the empty message only when nothing is selected.
   emptySelection.hidden = selectedProductIds.length > 0;
 
   selectedProductIds.forEach((productId) => {
-    const product = products.find((item) => item.id === productId);
+    const product = products.find(
+      (item) => item.id === productId
+    );
+
+    if (!product) {
+      return;
+    }
 
     const listItem = document.createElement("li");
     listItem.className = "selected-product";
@@ -217,7 +298,8 @@ function renderSelectedProducts() {
 
     const category = document.createElement("p");
     category.className = "selected-product-category";
-    category.textContent = product.category;
+    category.textContent =
+      `${product.brand} · ${product.category}`;
 
     info.append(name, category);
 
@@ -234,14 +316,13 @@ function renderSelectedProducts() {
     removeButton.addEventListener("click", () => {
       toggleProduct(product.id);
 
-      // Find the matching card inside its article wrapper.
+      // Return keyboard focus to the matching product card.
       const cards = productGrid.querySelectorAll(".product-card");
 
       const matchingCard = Array.from(cards).find(
         (card) => card.dataset.productId === product.id
       );
 
-      // Preserve a useful focus position after the remove button disappears.
       if (matchingCard) {
         matchingCard.focus();
       }
@@ -252,6 +333,6 @@ function renderSelectedProducts() {
   });
 }
 
-// Create the initial grid and empty selected-products list.
-renderProducts();
+// Show the empty selection state, then load the catalog.
 renderSelectedProducts();
+loadProducts();
