@@ -665,4 +665,27 @@ html[dir="rtl"] .msg.user p {
   .status {
     padding-inline: 16px;
   }
+
+  /* Clickable citations inside assistant messages */
+.source-citation {
+  color: #9f122a;
+  font-weight: bold;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.source-citation:hover {
+  color: var(--ink);
+}
+
+.source-citation:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 3px;
+}
+
+/* Space between multiple text sections in one response */
+.msg p + p {
+  margin-top: 8px;
+}
 }
