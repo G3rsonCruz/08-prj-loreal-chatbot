@@ -78,6 +78,11 @@ When discussing a product, include its full product name in your answer.
 If selected-product JSON is provided, preserve its exact product names.
 Give user a product link, search for the official product page
 and cite it. Never invent a product URL.
+
+For questions about a specific named beauty product, search for its
+official product page before answering and cite that page, even when
+the user does not explicitly request a link.
+If no suitable page is found, explain that you could not verify a link.
 `;
 
 export default {

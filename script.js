@@ -126,9 +126,9 @@ function normalizeProductName(value) {
     .trim();
 }
 
-/* Find a catalog URL or matching product citation. */
+/* Find a saved product URL or a matching web citation. */
 function findProductLink(product, parts) {
-  // Optional catalog field for a product page checked beforehand.
+  // Prefer a product URL already checked and saved in the catalog.
   const catalogLink = product.productUrl
     ? safeSourceUrl(product.productUrl)
     : null;
@@ -140,26 +140,44 @@ function findProductLink(product, parts) {
     };
   }
 
-  const productName = normalizeProductName(product.name);
+  // Require the product name and brand, but allow a different order.
+  const requiredWords = [
+    ...new Set(
+      normalizeProductName(
+        `${product.brand} ${product.name}`
+      )
+        .split(" ")
+        .filter(Boolean)
+    )
+  ];
 
-  if (!productName) {
+  if (requiredWords.length === 0) {
     return null;
   }
 
-  // Match the full product name against citation titles.
   for (const part of parts) {
     for (const citation of part.annotations || []) {
       if (citation.type !== "url_citation") {
         continue;
       }
 
-      const title = normalizeProductName(citation.title || "");
       const url = safeSourceUrl(citation.url);
 
-      if (
-        url &&
-        ` ${title} `.includes(` ${productName} `)
-      ) {
+      if (!url) {
+        continue;
+      }
+
+      const titleWords = new Set(
+        normalizeProductName(citation.title || "")
+          .split(" ")
+          .filter(Boolean)
+      );
+
+      const matchesProduct = requiredWords.every((word) =>
+        titleWords.has(word)
+      );
+
+      if (matchesProduct) {
         return {
           url,
           label: "View product information ↗"
