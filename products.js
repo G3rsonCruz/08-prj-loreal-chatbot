@@ -425,5 +425,48 @@ clearSelectionsBtn.addEventListener("click", () => {
   }
 });
 
+/* Create the Generate Routine button. */
+const generateRoutineBtn = document.createElement("button");
+
+generateRoutineBtn.type = "button";
+generateRoutineBtn.id = "generateRoutineButton";
+generateRoutineBtn.className = "remove-product";
+generateRoutineBtn.textContent = "Generate Routine";
+generateRoutineBtn.style.marginInlineStart = "12px";
+
+clearSelectionsBtn.after(generateRoutineBtn);
+
+generateRoutineBtn.addEventListener("click", () => {
+  // Collect only the products currently selected.
+  const selectedProducts = selectedProductIds
+    .map((id) => products.find((product) => product.id === id))
+    .filter(Boolean)
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      category: product.category,
+      description: product.description
+    }));
+
+  if (selectedProducts.length === 0) {
+    selectionStatus.textContent =
+      "Select at least one product before generating a routine.";
+
+    // Display the message in the chat status area too.
+    document.getElementById("status").textContent =
+      "Select at least one product before generating a routine.";
+
+    return;
+  }
+
+  // Let script.js handle the AI request and conversation.
+  document.dispatchEvent(
+    new CustomEvent("generate-routine", {
+      detail: selectedProducts
+    })
+  );
+});
+
 // Load the catalog and restore saved selections.
 loadProducts();
