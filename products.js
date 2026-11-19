@@ -397,7 +397,7 @@ function renderSelectedProducts() {
       );
 
       if (matchingCard) {
-        matchingCard.focus();
+        matchingCard.focus({preventScroll: true});
       }
     });
 
@@ -421,7 +421,7 @@ clearSelectionsBtn.addEventListener("click", () => {
   const firstCard = productGrid.querySelector(".product-card");
 
   if (firstCard) {
-    firstCard.focus();
+    firstCard.focus({preventScroll: true});
   }
 });
 
