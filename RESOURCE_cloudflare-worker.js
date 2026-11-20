@@ -82,6 +82,21 @@ For questions about a specific named beauty product, search for its
 official product page before answering and cite that page, even when
 the user does not explicitly request a link.
 If no suitable page is found, explain that you could not verify a link.
+
+When recommending specific products, search for their official product
+pages before giving the recommendations.
+
+Recommend at most two products per answer unless the user asks for more.
+For each recommended product, cite its official product page immediately
+after the recommendation.
+
+Do not postpone finding product links until another message.
+Do not invent product URLs.
+If you cannot verify an official product page, clearly explain that
+a verified product link is unavailable.
+
+Keep recommendations concise so the answer and citations fit within
+the output limit.
 `;
 
 export default {

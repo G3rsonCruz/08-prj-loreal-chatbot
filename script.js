@@ -1,7 +1,7 @@
 // Your API key stays inside the Cloudflare Worker.
 const WORKER_URL = "https://loreal-worker.cruzcarcg.workers.dev/";
 
-// Chat elements.
+// Chat interface elements.
 const chatForm = document.getElementById("chatForm");
 const userInput = document.getElementById("userInput");
 const chatWindow = document.getElementById("chatWindow");
@@ -13,7 +13,7 @@ const latestQuestion = document.getElementById("latestQuestion");
 const starters = document.querySelectorAll("[data-prompt]");
 const layoutDirection = document.getElementById("layoutDirection");
 
-// Store completed conversation turns until the page reloads.
+// Store completed conversation turns for this session.
 let messages = [];
 let busy = false;
 
@@ -35,7 +35,7 @@ function safeSourceUrl(value) {
   return null;
 }
 
-/* Create a clickable citation from the API's source information. */
+/* Create a clickable citation using the API's source information. */
 function createCitation(annotation, number) {
   const url = safeSourceUrl(annotation.url);
 
@@ -62,15 +62,20 @@ function createCitation(annotation, number) {
   return link;
 }
 
-/* Display answer text with clickable citations. */
+/* Display plain text with clickable inline citations. */
 function renderCitedText(container, text, annotations = []) {
-  const citations = [...annotations]
-    .filter((annotation) => annotation.type === "url_citation")
+  const citations = annotations
+    .filter(
+      (annotation) =>
+        annotation &&
+        annotation.type === "url_citation"
+    )
     .sort((a, b) => a.start_index - b.start_index);
 
   let position = 0;
   let sourceNumber = 1;
 
+  // Preserve links even when their text positions are unusable.
   const extraLinks = [];
 
   for (const citation of citations) {
@@ -92,7 +97,6 @@ function renderCitedText(container, text, annotations = []) {
       end >= start &&
       end <= text.length;
 
-    // Keep the source visible even if its position is unusable.
     if (!validPosition) {
       extraLinks.push(link);
       continue;
@@ -128,7 +132,7 @@ function normalizeProductName(value) {
 
 /* Find a saved product URL or a matching web citation. */
 function findProductLink(product, parts) {
-  // Prefer a product URL already checked and saved in the catalog.
+  // Prefer a checked product URL saved in products.json.
   const catalogLink = product.productUrl
     ? safeSourceUrl(product.productUrl)
     : null;
@@ -140,7 +144,7 @@ function findProductLink(product, parts) {
     };
   }
 
-  // Require the product name and brand, but allow a different order.
+  // Allow the brand and product name to appear in a different order.
   const requiredWords = [
     ...new Set(
       normalizeProductName(
@@ -156,8 +160,12 @@ function findProductLink(product, parts) {
   }
 
   for (const part of parts) {
-    for (const citation of part.annotations || []) {
-      if (citation.type !== "url_citation") {
+    const annotations = Array.isArray(part.annotations)
+      ? part.annotations
+      : [];
+
+    for (const citation of annotations) {
+      if (!citation || citation.type !== "url_citation") {
         continue;
       }
 
@@ -319,7 +327,74 @@ function addChatProductCards(bubble, answer, parts = []) {
   bubble.append(productCards);
 }
 
-/* Display a message, citations, and optional product cards. */
+/* Show sources independently of catalog product matching. */
+function addAnswerSourceLinks(bubble, parts) {
+  const sources = new Map();
+
+  for (const part of parts) {
+    const annotations = Array.isArray(part.annotations)
+      ? part.annotations
+      : [];
+
+    for (const annotation of annotations) {
+      if (
+        !annotation ||
+        annotation.type !== "url_citation"
+      ) {
+        continue;
+      }
+
+      const url = safeSourceUrl(annotation.url);
+
+      // Skip invalid or duplicate source links.
+      if (!url || sources.has(url)) {
+        continue;
+      }
+
+      sources.set(url, {
+        url,
+        title: annotation.title || new URL(url).hostname
+      });
+    }
+  }
+
+  if (sources.size === 0) {
+    return;
+  }
+
+  const sourceSection = document.createElement("div");
+  sourceSection.className = "answer-sources";
+
+  const heading = document.createElement("strong");
+
+  heading.className = "answer-sources-heading";
+  heading.textContent = "Product information & sources";
+
+  const list = document.createElement("ul");
+
+  for (const source of sources.values()) {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+
+    link.href = source.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = `${source.title} ↗`;
+
+    link.setAttribute(
+      "aria-label",
+      `${source.title} (opens in a new tab)`
+    );
+
+    item.append(link);
+    list.append(item);
+  }
+
+  sourceSection.append(heading, list);
+  bubble.append(sourceSection);
+}
+
+/* Display a message with optional citations and product cards. */
 function addMessage(role, text, parts = []) {
   const bubble = document.createElement("div");
 
@@ -334,7 +409,6 @@ function addMessage(role, text, parts = []) {
 
   bubble.append(label);
 
-  // Use citation-bearing parts when returned by the Worker.
   const validParts = Array.isArray(parts)
     ? parts.filter(
         (part) => part && typeof part.text === "string"
@@ -349,7 +423,7 @@ function addMessage(role, text, parts = []) {
   for (const part of displayParts) {
     const content = document.createElement("p");
 
-    // Follow the language direction of each message.
+    // Each message follows its own language direction.
     content.dir = "auto";
 
     renderCitedText(
@@ -364,7 +438,11 @@ function addMessage(role, text, parts = []) {
   }
 
   if (role === "assistant") {
+    // Catalog products can display images.
     addChatProductCards(bubble, text, displayParts);
+
+    // Sources also appear for products outside the catalog.
+    addAnswerSourceLinks(bubble, displayParts);
   }
 
   chatWindow.append(bubble);
@@ -373,7 +451,7 @@ function addMessage(role, text, parts = []) {
   return bubble;
 }
 
-/* Reset chat while preserving saved product selections. */
+/* Reset chat without clearing saved product selections. */
 function newChat() {
   messages = [];
   chatWindow.replaceChildren();
@@ -386,11 +464,9 @@ function newChat() {
 
   addMessage(
     "assistant",
-    "Hello, beautiful possibilities. Select products above and " +
-      "choose Generate Routine, or ask me about makeup, skincare, " +
-      "haircare, or fragrance. I can search for current product " +
-      "information and show sources. Products from our catalog " +
-      "can also appear with images."
+    "Hello, beautiful possibilities. Ask me about makeup, skincare, " +
+      "haircare, or fragrance. You can also open Browse products below " +
+      "to select products and generate a routine."
   );
 }
 
@@ -415,7 +491,7 @@ function setBusy(value) {
   }
 }
 
-/* Send a question or routine request to the Worker. */
+/* Send a regular question or a routine request to the Worker. */
 async function sendMessage(
   apiText,
   displayText,
@@ -475,6 +551,7 @@ async function sendMessage(
 
   const controller = new AbortController();
 
+  // Allow enough time for the Worker to complete a web search.
   const timeout = setTimeout(() => {
     controller.abort();
   }, 65000);
@@ -487,7 +564,7 @@ async function sendMessage(
         "Content-Type": "application/json"
       },
 
-      // Include completed turns and the latest request.
+      // Keep completed conversation turns for context.
       body: JSON.stringify({
         messages: nextMessages
       }),
@@ -518,10 +595,9 @@ async function sendMessage(
       );
     }
 
-    // Display the answer, citations, and catalog product cards.
     addMessage("assistant", answer, reply.parts);
 
-    // Save successfully completed turns for follow-up questions.
+    // Save only successfully completed conversation turns.
     messages = [
       ...nextMessages,
       {
@@ -543,6 +619,15 @@ async function sendMessage(
     }
 
     chatStatus.textContent = notices.join(" ");
+
+    // Bring the routine into view after using the product browser.
+    // Removing or clearing products does not trigger this scroll.
+    if (isRoutine) {
+      document.querySelector(".chatbox")?.scrollIntoView({
+        behavior: "auto",
+        block: "start"
+      });
+    }
   } catch (error) {
     userBubble.remove();
 
@@ -651,11 +736,54 @@ resetBtn.addEventListener("click", () => {
   userInput.focus({ preventScroll: true });
 });
 
-/* Switch between LTR and RTL layouts. */
-layoutDirection.addEventListener("change", () => {
+/* Preserve the LTR and RTL layout selector. */
+if (layoutDirection) {
+  layoutDirection.addEventListener("change", () => {
+    document.documentElement.dir = layoutDirection.value;
+  });
+
   document.documentElement.dir = layoutDirection.value;
-});
+}
 
-document.documentElement.dir = layoutDirection.value;
+/* Move product browsing below the chat and collapse it initially. */
+function setupProductBrowser() {
+  const productSection = document.querySelector(".product-section");
+  const chatSection = document.querySelector(".chatbox");
 
+  if (
+    !productSection ||
+    !chatSection ||
+    document.getElementById("productBrowser")
+  ) {
+    return;
+  }
+
+  // Native details provides keyboard-accessible open/close behavior.
+  const browser = document.createElement("details");
+
+  browser.id = "productBrowser";
+  browser.className = "product-browser";
+
+  const summary = document.createElement("summary");
+
+  const title = document.createElement("strong");
+  title.textContent = "Browse products";
+
+  const description = document.createElement("span");
+  description.textContent =
+    "Search, filter, and select products for your routine.";
+
+  summary.append(title, description);
+  browser.append(summary);
+
+  // Move existing elements, preserving their event listeners.
+  browser.append(productSection);
+  chatSection.after(browser);
+
+  // Start with the catalog collapsed.
+  browser.open = false;
+}
+
+// Prepare the page.
+setupProductBrowser();
 newChat();

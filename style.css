@@ -778,4 +778,88 @@ html[dir="rtl"] .msg.user p {
   }
 }
 
+/* Collapsible product browser below the chatbot */
+.product-browser {
+  max-width: 820px;
+  margin: 24px auto 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  text-align: start;
+}
+
+.product-browser > summary {
+  padding: 20px 24px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.product-browser > summary strong {
+  font-size: 16px;
+}
+
+.product-browser > summary span {
+  display: block;
+  margin-top: 8px;
+  color: #62605d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.product-browser[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.product-browser > .product-section {
+  max-width: none;
+  margin: 0;
+  padding: 24px;
+}
+
+/* Source links under chatbot answers */
+.answer-sources {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  text-align: start;
+}
+
+.answer-sources-heading {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.answer-sources ul {
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.answer-sources li + li {
+  margin-top: 10px;
+}
+
+.answer-sources a {
+  color: #9f122a;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.answer-sources a:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .product-browser > summary,
+  .product-browser > .product-section {
+    padding: 16px;
+  }
+}
 }
