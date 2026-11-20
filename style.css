@@ -955,4 +955,85 @@ html[dir="rtl"] .msg.user p {
     inset-inline-end: 18px;
   }
 }
+
+/* Make the product browser look like a clickable branded panel. */
+#productBrowser {
+  max-width: 820px;
+  margin: 24px auto;
+  background: white;
+  border: 2px solid #c81735;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#productBrowser > summary {
+  position: relative;
+  display: block;
+  list-style: none;
+  padding: 22px;
+  padding-inline-end: 76px;
+  background: #fff5f6;
+  cursor: pointer;
+}
+
+/* Remove the browser's default triangle. */
+#productBrowser > summary::-webkit-details-marker {
+  display: none;
+}
+
+#productBrowser > summary::marker {
+  content: "";
+}
+
+#productBrowser > summary strong {
+  display: block;
+  color: #c81735;
+  font-size: 18px;
+}
+
+#productBrowser > summary span {
+  display: block;
+  margin-top: 8px;
+  color: #62605d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Show a clear expand/collapse indicator. */
+#productBrowser > summary::after {
+  content: "+";
+  position: absolute;
+  inset-inline-end: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #c81735;
+  color: white;
+  font-size: 26px;
+}
+
+#productBrowser[open] > summary::after {
+  content: "−";
+}
+
+#productBrowser[open] > summary {
+  border-bottom: 1px solid #dedbd6;
+}
+
+#productBrowser > summary:hover {
+  background: #fce7eb;
+}
+
+#productBrowser > summary:focus-visible {
+  outline: 3px solid #171717;
+  outline-offset: -6px;
+}
+
+#productBrowser > .product-section {
+  padding: 20px;
+}
 }
