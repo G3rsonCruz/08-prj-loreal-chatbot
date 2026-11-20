@@ -1,6 +1,5 @@
 // SERVER ONLY: deploy this code to your Cloudflare Worker.
 // Keep OPENAI_API_KEY stored as a Cloudflare secret.
-
 const MAX_OUTPUT_TOKENS = 300;
 const MAX_HISTORY_CHARS = 40000;
 
